@@ -112,10 +112,6 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           body: |
-            ## What's Changed
-
-            See [CHANGELOG.md](https://github.com/xtrella/aluvia-js/blob/main/CHANGELOG.md) for detailed changes.
-
             ## Installation
 
             ```bash
