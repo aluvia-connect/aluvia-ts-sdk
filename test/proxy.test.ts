@@ -24,7 +24,6 @@ describe("Proxy", () => {
       username: "testuser123",
       password: "testpass456",
       useSticky: false,
-      useSmartRouting: false,
     };
 
     // Create test config
@@ -48,7 +47,6 @@ describe("Proxy", () => {
         httpPort: 8080,
         httpsPort: 8443,
         useSticky: false,
-        useSmartRouting: false,
       });
     });
   });
@@ -101,28 +99,6 @@ describe("Proxy", () => {
     });
   });
 
-  describe("useSmartRouting property", () => {
-    it("should get and set useSmartRouting property", () => {
-      expect(proxy.useSmartRouting).toBe(false);
-
-      proxy.useSmartRouting = true;
-      expect(proxy.useSmartRouting).toBe(true);
-
-      proxy.useSmartRouting = false;
-      expect(proxy.useSmartRouting).toBe(false);
-    });
-
-    it("should save smart routing and add routing suffix", async () => {
-      mockSdk.update.mockResolvedValue(proxy);
-      proxy.useSmartRouting = true;
-      await proxy.save();
-
-      expect(proxy.useSmartRouting).toBe(true);
-      expect(proxy.username).toBe("testuser123-routing-smart");
-      expect(mockSdk.update).toHaveBeenCalled();
-    });
-  });
-
   describe("disable functionality", () => {
     beforeEach(() => {
       mockSdk.update.mockResolvedValue(proxy);
@@ -143,33 +119,6 @@ describe("Proxy", () => {
     });
   });
 
-  describe("smartRoutingEnabled property", () => {
-    beforeEach(() => {
-      mockSdk.update.mockResolvedValue(proxy);
-    });
-
-    it("should disable smart routing and remove routing suffix", async () => {
-      // Enable first
-      proxy.useSmartRouting = true;
-      await proxy.save();
-      expect(proxy.useSmartRouting).toBe(true);
-
-      proxy.useSmartRouting = false;
-      await proxy.save();
-
-      expect(proxy.useSmartRouting).toBe(false);
-      expect(proxy.username).toBe("testuser123");
-      expect(mockSdk.update).toHaveBeenCalledTimes(2);
-    });
-
-    it("should propagate update failures", async () => {
-      mockSdk.update.mockRejectedValue(new Error("Routing disable failed"));
-
-      proxy.useSmartRouting = false;
-      await expect(proxy.save()).rejects.toThrow("Routing disable failed");
-    });
-  });
-
   describe("property setters", () => {
     beforeEach(() => {
       mockSdk.update.mockResolvedValue(proxy);
@@ -177,11 +126,9 @@ describe("Proxy", () => {
 
     it("should support setting multiple properties before saving", async () => {
       proxy.useSticky = true;
-      proxy.useSmartRouting = true;
       await proxy.save();
 
       expect(proxy.useSticky).toBe(true);
-      expect(proxy.useSmartRouting).toBe(true);
       expect(proxy.username).toMatch(
         /testuser123-session-[a-zA-Z0-9]{8}-routing-smart/
       );
@@ -192,14 +139,12 @@ describe("Proxy", () => {
       proxy.useSticky = true;
       await proxy.save();
 
-      proxy.useSmartRouting = true;
       await proxy.save();
 
       proxy.useSticky = false;
       await proxy.save();
 
       expect(proxy.useSticky).toBe(false);
-      expect(proxy.useSmartRouting).toBe(true);
       expect(proxy.username).toBe("testuser123-routing-smart");
       expect(mockSdk.update).toHaveBeenCalledTimes(3);
     });
@@ -229,17 +174,6 @@ describe("Proxy", () => {
       const url = proxy.toUrl();
       expect(url).toMatch(
         /http:\/\/testuser123-session-[a-zA-Z0-9]{8}:testpass456@proxy\.aluvia\.io:8080/
-      );
-    });
-
-    it("should include smart routing suffix in URL when enabled", async () => {
-      mockSdk.update.mockResolvedValue(proxy);
-      proxy.useSmartRouting = true;
-      await proxy.save();
-
-      const url = proxy.toUrl();
-      expect(url).toBe(
-        "http://testuser123-routing-smart:testpass456@proxy.aluvia.io:8080"
       );
     });
 
@@ -282,22 +216,19 @@ describe("Proxy", () => {
         httpPort: 8080,
         httpsPort: 8443,
         useSticky: false,
-        useSmartRouting: false,
       });
     });
 
     it("should reflect current feature states", async () => {
       mockSdk.update.mockResolvedValue(proxy);
       proxy.useSticky = true;
-      proxy.useSmartRouting = true;
       await proxy.save();
 
       const json = proxy.toJSON();
 
       expect(json.useSticky).toBe(true);
-      expect(json.useSmartRouting).toBe(true);
       expect(json.username).toMatch(
-        /testuser123-session-[a-zA-Z0-9]{8}-routing-smart/
+        /testuser123-session-[a-zA-Z0-9]{8}/
       );
     });
   });
@@ -309,10 +240,9 @@ describe("Proxy", () => {
 
     it("should handle usernames with existing suffixes", async () => {
       const credentialWithSuffixes: ProxyCredential = {
-        username: "testuser123-session-oldSalt-routing-smart",
+        username: "testuser123-session-oldSalt",
         password: "testpass456",
         useSticky: false,
-        useSmartRouting: false,
       };
 
       const proxyWithSuffixes = new Proxy(
@@ -336,14 +266,8 @@ describe("Proxy", () => {
       proxy.useSticky = false;
       await proxy.save();
 
-      proxy.useSmartRouting = true;
-      await proxy.save();
-
-      proxy.useSmartRouting = false;
-      await proxy.save();
-
       expect(proxy.username).toBe("testuser123");
-      expect(mockSdk.update).toHaveBeenCalledTimes(4);
+      expect(mockSdk.update).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -354,17 +278,14 @@ describe("Proxy", () => {
 
     it("should maintain independent feature states", async () => {
       proxy.useSticky = true;
-      proxy.useSmartRouting = true;
       await proxy.save();
 
       expect(proxy.useSticky).toBe(true);
-      expect(proxy.useSmartRouting).toBe(true);
 
       proxy.useSticky = false;
       await proxy.save();
 
       expect(proxy.useSticky).toBe(false);
-      expect(proxy.useSmartRouting).toBe(true); // Should remain enabled
     });
 
     it("should generate new session salt on re-enable", async () => {
@@ -389,11 +310,9 @@ describe("Proxy", () => {
 
       // Set both properties and save
       proxy.useSticky = true;
-      proxy.useSmartRouting = true;
       await proxy.save();
 
       expect(proxy.useSticky).toBe(true);
-      expect(proxy.useSmartRouting).toBe(true);
       expect(mockSdk.update).toHaveBeenCalledTimes(1); // Only one save call
     });
 

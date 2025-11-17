@@ -298,7 +298,6 @@ describe("Aluvia SDK", () => {
         password: "pass1",
         options: {
           use_sticky: true,
-          use_smart_routing: false,
         },
       },
     };
@@ -321,7 +320,6 @@ describe("Aluvia SDK", () => {
 
       const result = await sdk.update("user1", {
         useSticky: true,
-        useSmartRouting: true,
       });
 
       expect(result).toBeInstanceOf(Proxy);
@@ -330,7 +328,6 @@ describe("Aluvia SDK", () => {
         {
           options: {
             use_sticky: true,
-            use_smart_routing: true,
           },
         },
         {
@@ -342,7 +339,7 @@ describe("Aluvia SDK", () => {
     it("should update proxy by username with suffixes", async () => {
       mockApi.patch.mockResolvedValue(mockUpdateResponse);
 
-      const result = await sdk.update("user1-session-old123-routing-smart", {
+      const result = await sdk.update("user1-session-old123", {
         useSticky: true,
       });
 
@@ -365,14 +362,12 @@ describe("Aluvia SDK", () => {
 
       await sdk.update("user1", {
         useSticky: true,
-        useSmartRouting: false,
       });
 
       const allProxies = await sdk.all();
       const updatedProxy = allProxies.find((p) => p.username.includes("user1"));
 
       expect(updatedProxy?.useSticky).toBe(true);
-      expect(updatedProxy?.useSmartRouting).toBe(false);
     });
 
     it("should handle partial updates", async () => {

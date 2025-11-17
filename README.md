@@ -106,7 +106,6 @@ if (proxy) {
   // Update proxy settings
   await aluvia.update("username123", {
     useSticky: true,
-    useSmartRouting: true,
   });
 
   // Get usage information
@@ -125,10 +124,9 @@ const proxy = await aluvia.first();
 if (proxy) {
   // Laravel-style property setting
   proxy.useSticky = true;
-  proxy.useSmartRouting = true;
   await proxy.save(); // Apply changes to server
 
-  // Get enhanced proxy URL with all features
+  // Get enhanced proxy URL with sticky sessions
   const enhancedUrl = proxy.toUrl();
   console.log("Enhanced proxy URL:", enhancedUrl);
 
@@ -139,7 +137,6 @@ if (proxy) {
   console.log("HTTP Port:", proxy.httpPort);
   console.log("HTTPS Port:", proxy.httpsPort);
   console.log("Sticky enabled:", proxy.useSticky);
-  console.log("Smart routing enabled:", proxy.useSmartRouting);
 
   // Get usage information
   const usage = await proxy.getUsage();
@@ -257,7 +254,7 @@ Updates a specific proxy's configuration on the server.
 **Parameters:**
 
 - `username`: The username of the proxy to update
-- `options`: Object with `useSticky?: boolean` and `useSmartRouting?: boolean`
+- `options`: Object with `useSticky?: boolean`
 
 **Returns:** A promise that resolves to the updated Proxy instance
 
@@ -320,10 +317,6 @@ Gets the HTTPS port number for the proxy server (typically 8443).
 
 Gets or sets whether sticky sessions are enabled for this proxy.
 
-##### `useSmartRouting: boolean` (Getter/Setter)
-
-Gets or sets whether smart routing is enabled for this proxy.
-
 #### Methods
 
 ##### `toUrl(protocol?: 'http' | 'https'): string`
@@ -375,7 +368,6 @@ interface ProxyCredential {
   username: string;
   password: string;
   useSticky?: boolean;
-  useSmartRouting?: boolean;
   sessionSalt?: string;
 }
 

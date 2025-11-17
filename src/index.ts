@@ -17,8 +17,6 @@ export interface ProxyCredential {
   password: string;
   /** Whether sticky sessions are enabled for this proxy */
   useSticky?: boolean;
-  /** Whether smart routing is enabled for this proxy */
-  useSmartRouting?: boolean;
   /** The session salt used for sticky sessions */
   sessionSalt?: string;
 }
@@ -55,7 +53,6 @@ interface RawCredential {
   password: string;
   options: {
     use_sticky?: boolean;
-    use_smart_routing?: boolean;
   };
 }
 
@@ -148,7 +145,7 @@ export class Proxy {
   /**
    * Saves any changes made to the proxy configuration to the server.
    *
-   * This method syncs the current proxy state (sticky sessions, smart routing)
+   * This method syncs the current proxy state (sticky sessions)
    * with the Aluvia API server. Call this after modifying any properties.
    *
    * @returns A promise that resolves to the updated Proxy instance
@@ -159,7 +156,6 @@ export class Proxy {
    * ```typescript
    * const proxy = await sdk.first();
    * proxy.useSticky = true;
-   * proxy.useSmartRouting = true;
    * await proxy.save(); // Sync with server
    * ```
    */
@@ -176,7 +172,6 @@ export class Proxy {
 
     await this.sdk.update(this.credential.username, {
       useSticky: this.credential.useSticky,
-      useSmartRouting: this.credential.useSmartRouting,
     });
 
     return this;
@@ -201,27 +196,6 @@ export class Proxy {
 
   set useSticky(enabled: boolean) {
     this.credential.useSticky = enabled;
-  }
-
-  /**
-   * Gets or sets whether smart routing is enabled for this proxy.
-   *
-   * Smart routing automatically selects the optimal path based on
-   * network conditions and target destination for improved performance.
-   *
-   * @example
-   * ```typescript
-   * const proxy = await sdk.first();
-   * proxy.useSmartRouting = true;
-   * await proxy.save(); // Apply changes
-   * ```
-   */
-  get useSmartRouting(): boolean {
-    return this.credential.useSmartRouting || false;
-  }
-
-  set useSmartRouting(enabled: boolean) {
-    this.credential.useSmartRouting = enabled;
   }
 
   /**
@@ -351,7 +325,6 @@ export class Proxy {
       httpPort: this.httpPort,
       httpsPort: this.httpsPort,
       useSticky: this.useSticky,
-      useSmartRouting: this.useSmartRouting,
     };
   }
 
@@ -364,11 +337,6 @@ export class Proxy {
     // Add sticky session suffix
     if (this.credential.useSticky && this.credential.sessionSalt) {
       username += `-session-${this.credential.sessionSalt}`;
-    }
-
-    // Add smart routing suffix
-    if (this.credential.useSmartRouting) {
-      username += "-routing-smart";
     }
 
     return {
@@ -456,10 +424,6 @@ export class Aluvia {
       useSticky:
         options && "use_sticky" in options
           ? options.use_sticky || false
-          : false,
-      useSmartRouting:
-        options && "use_smart_routing" in options
-          ? options.use_smart_routing || false
           : false,
     };
   }
@@ -627,7 +591,7 @@ export class Aluvia {
   /**
    * Updates a specific proxy's configuration on the server.
    *
-   * This method allows you to update proxy settings (sticky sessions, smart routing)
+   * This method allows you to update proxy settings (sticky sessions)
    * for a specific proxy by username, similar to how find() and delete() work.
    *
    * @param username - The username of the proxy to update
@@ -644,7 +608,6 @@ export class Aluvia {
    * // Update specific proxy settings
    * const updatedProxy = await sdk.update('user123', {
    *   useSticky: true,
-   *   useSmartRouting: true
    * });
    * ```
    */
@@ -652,7 +615,6 @@ export class Aluvia {
     username: string,
     options: {
       useSticky?: boolean;
-      useSmartRouting?: boolean;
     }
   ): Promise<Proxy | null> {
     const baseUsername = stripUsernameSuffixes(username);
@@ -661,7 +623,6 @@ export class Aluvia {
     const updateData = {
       options: {
         use_sticky: options.useSticky,
-        use_smart_routing: options.useSmartRouting,
       },
     };
 
@@ -824,12 +785,10 @@ export class Aluvia {
 }
 
 /**
- * Strip session and routing suffixes from username
+ * Strip session suffixes from username
  */
 function stripUsernameSuffixes(username: string): string {
-  return username
-    .replace(/-session-[a-zA-Z0-9]+/, "")
-    .replace(/-routing-smart/, "");
+  return username.replace(/-session-[a-zA-Z0-9]+/, "");
 }
 
 // Export error types for users
